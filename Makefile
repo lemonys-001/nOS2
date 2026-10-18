@@ -52,9 +52,9 @@ run: $(KERNEL_ELF)
 	$(QEMU) -kernel $(KERNEL_ELF) -vga std -serial stdio -m 256
 
 iso: $(KERNEL_BIN)
-	mkdir -p iso/boot
+	mkdir -p iso/boot/grub
 	cp $(KERNEL_BIN) iso/boot/kernel.bin
-	xorriso -as mkisofs -o nOS.iso -b boot/kernel.bin -no-emul-boot -boot-load-size 4 -boot-info-table iso/
+	grub-mkrescue -o nOS.iso iso/
 	@echo "ISO created: nOS.iso"
 
 phase-check: all
