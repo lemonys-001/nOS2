@@ -1,60 +1,51 @@
 # Running nOS in Limbo Emulator (Android)
 
 ## The Problem
-Limbo Emulator's BIOS couldn't boot the previous ISO because it used a raw kernel as the El Torito boot image (`-no-emul-boot`), which isn't a valid PC boot sector. Limbo got stuck on "booting from CD/DVD" because the BIOS didn't know how to load it.
+Limbo Emulator's virtual CD-ROM couldn't boot the GRUB ISO ("couldn't read the boot disk"), and earlier ISOs had ELF/multiboot module issues.
 
-## The Fix
-The ISO now uses **GRUB2** (`grub-mkrescue`), which writes a proper PC boot sector (`boot_hybrid.img`) that Limbo's BIOS understands.
+## The Solution: Hard Disk Image
+Use `nOS.img` — a 32MB bootable hard disk image with GRUB installed to the MBR. Limbo boots hard disks much more reliably than CD-ROMs.
+
+## Files in nOS-02/
+- **`nOS.img`** — Bootable hard disk image (USE THIS in Limbo)
+- **`nOS.iso`** — Bootable CD image (alternative, if CD-ROM works in your Limbo version)
 
 ## Steps to Run in Limbo
 
-1. **Copy the ISO to your Android device**
-   - Transfer `nOS.iso` (from `nOS-02/` or `nOS2/`) to your phone's storage (e.g., `/sdcard/Download/nOS.iso`)
+1. **Copy files to your Android device**
+   - Transfer `nOS.img` (and `nOS.iso` as backup) to your phone's storage (e.g., `/sdcard/Download/`)
 
 2. **Create a new VM in Limbo**
    - Open Limbo Emulator
    - Tap "+" to create a new machine
    - **Machine:** PC (i386)
-   - **RAM:** 256 MB (minimum)
-   - **Storage:** Create a new virtual disk (any size, e.g., 2 GB)
-   - **CD/DVD:** Insert `nOS.iso`
-   - **Boot order:** CD/DVD first
+   - **RAM:** 256 MB
+   - **Storage:** Tap the storage slot → Insert image → Select `nOS.img`
+   - **Boot order:** Hard disk first
 
 3. **Start the VM**
    - Tap the play button
-   - You should see the GRUB menu, then nOS boots to the Windows 7-style desktop
+   - GRUB loads `kernel.elf` via multiboot, then nOS boots to the Windows 7-style desktop
 
-4. **If it still gets stuck on "booting from CD/DVD"**
-   - Make sure you're using the **new** `nOS.iso` (built with GRUB), not the old one
-   - In Limbo VM settings, set **Boot Order** to CD/DVD only (disable hard disk boot temporarily)
+4. **If it still doesn't boot**
+   - Make sure you're using `nOS.img` as the **Hard Disk** (not CD/DVD)
+   - Set **Boot Order** to Hard Disk only
    - Try **Machine: i386** (not x86_64)
-   - Ensure **CD/DVD** is pointed at `nOS.iso`
+   - **Acceleration:** TCG (default on Android, no KVM needed)
 
-## Alternative: Boot from Floppy (most reliable in Limbo)
+## Limbo Settings Summary
+| Setting | Value |
+|---------|-------|
+| Machine | PC (i386) |
+| RAM | 256 MB |
+| Storage | nOS.img (Hard Disk) |
+| Boot Order | Hard Disk first |
+| Acceleration | TCG |
 
-If CD/DVD still doesn't work, use a floppy image:
-
-```bash
-# Create a 1.44MB FAT12 floppy with GRUB
-dd if=/dev/zero of=nOS.flp bs=1024 count=1440
-mkfs.msdos nOS.flp
-mkdir -p /tmp/flop
-sudo mount -o loop nOS.flp /tmp/flop
-mkdir -p /tmp/flop/boot/grub
-cp build/kernel.bin /tmp/flop/boot/
-cp iso/boot/grub/grub.cfg /tmp/flop/boot/grub/
-grub-mkimage -d /usr/lib/grub/i386-pc -o /tmp/flop/boot/grub/core.img -O i386-pc -p '(fd0)/boot/grub' biosdisk fat
-sudo umount /tmp/flop
-```
-
-Then in Limbo, attach `nOS.flp` as the floppy and set boot order to floppy first.
-
-## Limbo Settings That Help
-- **Display:** SDL (default) or VNC
-- **Acceleration:** TCG (no KVM needed on Android)
-- **Machine type:** pc (i386)
-- **BIOS:** Default (SeaBIOS)
+## Alternative: CD-ROM (if your Limbo supports it)
+Use `nOS.iso` in the CD/DVD slot with Boot Order set to CD/DVD first.
 
 ## Files
-- `nOS.iso` — Bootable CD image (use this in Limbo's CD/DVD slot)
-- `build/kernel.bin` — Raw kernel (for advanced/custom boot setups)
+- `nOS.img` — Bootable hard disk image (recommended for Limbo)
+- `nOS.iso` — Bootable CD image (alternative)
+- `build/kernel.elf` — Raw kernel ELF (for advanced/custom boot setups)

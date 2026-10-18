@@ -57,6 +57,10 @@ iso: $(KERNEL_ELF)
 	grub-mkrescue --modules="multiboot fat" -o nOS.iso iso/
 	@echo "ISO created: nOS.iso"
 
+hdd:
+	bash make_hdd.sh
+	@echo "Hard disk image created: nOS.img"
+
 phase-check: all
 	@echo "Phase build OK: $(KERNEL_ELF)"
 
