@@ -5,3 +5,4 @@ build/
 *.o
 build_phase*.log
 build_iso.log
+!iso/boot/grub/grub.cfg

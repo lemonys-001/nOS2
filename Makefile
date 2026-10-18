@@ -61,4 +61,6 @@ phase-check: all
 	@echo "Phase build OK: $(KERNEL_ELF)"
 
 clean:
-	rm -rf $(BUILD_DIR) nOS.iso iso
+	rm -rf $(BUILD_DIR) nOS.iso
+	rm -f iso/boot/kernel.bin
+	rmdir iso/boot/grub iso/boot iso 2>/dev/null || true
