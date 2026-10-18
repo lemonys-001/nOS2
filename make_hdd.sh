@@ -31,8 +31,8 @@ dd if=/dev/zero of="$IMG" bs=1M count=32 2>/dev/null
 # Write GRUB boot sector to MBR
 dd if=/usr/lib/grub/i386-pc/boot.img of="$IMG" bs=512 count=1 conv=notrunc 2>/dev/null
 
-# Create and embed GRUB core image
-grub-mkimage -d /usr/lib/grub/i386-pc -O i386-pc -p '(hd0,msdos1)/boot/grub' -o "$COREIMG" fat multiboot 2>&1
+# Create and embed GRUB core image (include 'normal' module to read grub.cfg)
+grub-mkimage -d /usr/lib/grub/i386-pc -O i386-pc -p '(hd0,msdos1)/boot/grub' -o "$COREIMG" fat multiboot normal 2>&1
 dd if="$COREIMG" of="$IMG" bs=512 seek=1 conv=notrunc 2>/dev/null
 
 # Write FAT partition at sector 2048 (1MB offset)
