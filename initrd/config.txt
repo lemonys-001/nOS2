@@ -1,0 +1,5 @@
+# nOS Configuration
+background_color=0x00A2ED
+taskbar_color=0x808080
+start_button_color=0xC0C0C0
+mouse_speed=2

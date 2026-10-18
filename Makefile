@@ -14,30 +14,51 @@ BUILD_DIR := build
 KERNEL_ELF := $(BUILD_DIR)/kernel.elf
 KERNEL_BIN := $(BUILD_DIR)/kernel.bin
 
-BOOT_OBJ  := $(BUILD_DIR)/boot.o
-KERNEL_OBJ := $(BUILD_DIR)/kernel.o
+SRCS := $(wildcard $(SRC_DIR)/*.c)
+ASMS := $(wildcard $(SRC_DIR)/*.s)
+OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o) $(ASMS:$(SRC_DIR)/%.s=$(BUILD_DIR)/%.o)
 
-.PHONY: all clean run
+INITRD_BIN := $(BUILD_DIR)/initrd
+INITRD_OBJ := $(BUILD_DIR)/initrd.o
 
-all: $(KERNEL_ELF) $(KERNEL_BIN)
+.PHONY: all clean run iso phase-check initrd
+
+all: initrd $(KERNEL_ELF) $(KERNEL_BIN)
+
+initrd: $(INITRD_BIN)
+
+$(INITRD_BIN): | $(BUILD_DIR)
+	bash make_initrd.sh
+
+$(INITRD_OBJ): $(INITRD_BIN) | $(BUILD_DIR)
+	$(OBJCOPY) -I binary -O elf32-i386 $< $@
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-$(BOOT_OBJ): $(SRC_DIR)/boot.s | $(BUILD_DIR)
-	$(AS) $(ASFLAGS) $< -o $@
-
-$(KERNEL_OBJ): $(SRC_DIR)/kernel.c | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(KERNEL_ELF): $(BOOT_OBJ) $(KERNEL_OBJ) src/linker.ld | $(BUILD_DIR)
-	$(LD) $(LDFLAGS) -o $@ $(BOOT_OBJ) $(KERNEL_OBJ)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s | $(BUILD_DIR)
+	$(AS) $(ASFLAGS) $< -o $@
+
+$(KERNEL_ELF): $(OBJS) $(INITRD_OBJ) src/linker.ld | $(BUILD_DIR)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(INITRD_OBJ)
 
 $(KERNEL_BIN): $(KERNEL_ELF)
 	$(OBJCOPY) -O binary $< $@
 
 run: $(KERNEL_ELF)
-	$(QEMU) -kernel $(KERNEL_ELF) -vga std -serial stdio
+	$(QEMU) -kernel $(KERNEL_ELF) -vga std -serial stdio -m 256
+
+iso: $(KERNEL_BIN)
+	mkdir -p iso/boot
+	cp $(KERNEL_BIN) iso/boot/kernel.bin
+	xorriso -as mkisofs -o nOS.iso -b boot/kernel.bin -no-emul-boot -boot-load-size 4 -boot-info-table iso/
+	@echo "ISO created: nOS.iso"
+
+phase-check: all
+	@echo "Phase build OK: $(KERNEL_ELF)"
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) nOS.iso iso

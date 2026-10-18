@@ -24,4 +24,7 @@ SECTIONS
     .bss : {
         *(.bss)
     }
+
+    end = .;
+    kern_end = .;
 }
