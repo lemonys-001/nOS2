@@ -54,7 +54,7 @@ run: $(KERNEL_ELF)
 iso: $(KERNEL_BIN)
 	mkdir -p iso/boot/grub
 	cp $(KERNEL_BIN) iso/boot/kernel.bin
-	grub-mkrescue -o nOS.iso iso/
+	grub-mkrescue --modules="multiboot fat" -o nOS.iso iso/
 	@echo "ISO created: nOS.iso"
 
 phase-check: all
