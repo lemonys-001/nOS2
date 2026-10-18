@@ -51,9 +51,9 @@ $(KERNEL_BIN): $(KERNEL_ELF)
 run: $(KERNEL_ELF)
 	$(QEMU) -kernel $(KERNEL_ELF) -vga std -serial stdio -m 256
 
-iso: $(KERNEL_BIN)
+iso: $(KERNEL_ELF)
 	mkdir -p iso/boot/grub
-	cp $(KERNEL_BIN) iso/boot/kernel.bin
+	cp $(KERNEL_ELF) iso/boot/kernel.elf
 	grub-mkrescue --modules="multiboot fat" -o nOS.iso iso/
 	@echo "ISO created: nOS.iso"
 
